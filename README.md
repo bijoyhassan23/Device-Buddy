@@ -1,1 +1,1 @@
-# Device-Buddy
+# BotBuddy
