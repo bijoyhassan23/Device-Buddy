@@ -9,8 +9,8 @@ if ( ! isset( $settings ) ) {
     $settings = [];
 }
 
-if ( ! isset( $settings_updated ) ) {
-    $settings_updated = false;
+if ( ! isset( $logs ) ) {
+    $logs = '';
 }
 
 $bot_name = isset( $settings['bot_name'] ) ? $settings['bot_name'] : '';
@@ -34,13 +34,7 @@ $prompt_template = isset( $settings['prompt_template'] ) ? $settings['prompt_tem
         </div>
     </div>
 
-    <?php if ( $settings_updated ) : ?>
-        <div class="notice notice-success is-dismissible botbuddy-notice">
-            <p><?php echo esc_html__( 'BotBuddy settings updated successfully.', 'botbuddy' ); ?></p>
-        </div>
-    <?php endif; ?>
-
-    <form class="botbuddy-settings-form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+    <form class="botbuddy-settings-form" method="post" action="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>">
         <?php wp_nonce_field( 'botbuddy_save_settings', 'botbuddy_nonce' ); ?>
         <input type="hidden" name="action" value="botbuddy_save_settings" />
 
@@ -130,11 +124,40 @@ $prompt_template = isset( $settings['prompt_template'] ) ? $settings['prompt_tem
                     <code>%s</code> for context and <code>%s</code> for the user question.
                 </div>
             </section>
+
+            <section class="botbuddy-panel botbuddy-panel-wide botbuddy-log-panel">
+                <div class="botbuddy-panel-header">
+                    <div>
+                        <span class="botbuddy-panel-tag">Activity</span>
+                        <h2>Transient Log</h2>
+                    </div>
+
+                    <button type="submit" form="botbuddy-clear-logs-form" class="button button-secondary button-large botbuddy-action-button" id="botbuddy-clear-transient">Clear Transient</button>
+                </div>
+
+                <div class="botbuddy-log-card-body">
+                    <?php if ( ! empty( $logs ) ) : ?>
+                        <pre class="botbuddy-log-output"><?php echo esc_html( $logs ); ?></pre>
+                    <?php else : ?>
+                        <div class="botbuddy-log-empty">No logs yet. Settings saves and other log events will appear here.</div>
+                    <?php endif; ?>
+                </div>
+
+                <div class="botbuddy-log-card-footnote">Stored in a WordPress transient for 12 hours.</div>
+            </section>
         </div>
 
         <div class="botbuddy-actions">
-            <button type="submit" class="button button-primary button-large">Update Settings</button>
+            <div class="botbuddy-actions-buttons">
+                <button type="submit" class="button button-secondary button-large botbuddy-action-button" id="botbuddy-update-settings">Update Settings</button>
+                <button type="button" id="botbuddy-create-chunking" class="button button-secondary button-large botbuddy-action-button">Create Chunking</button>
+            </div>
             <p class="botbuddy-actions-note">All changes are saved to the plugin options immediately after update.</p>
         </div>
+    </form>
+
+    <form id="botbuddy-clear-logs-form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+        <?php wp_nonce_field( 'botbuddy_clear_logs', 'botbuddy_clear_logs_nonce' ); ?>
+        <input type="hidden" name="action" value="botbuddy_clear_logs" />
     </form>
 </div>

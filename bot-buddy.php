@@ -15,8 +15,10 @@ defined( 'ABSPATH' ) or die( 'Direct access is not allowed' );
 
 class Bot_buddy{
     private static $instance = null;
+    private const LOG_TRANSIENT = 'botbuddy_logs';
     private $initialized = false;
     private $settings = [];
+    private $rest_admin = null;
     
     public static function get_instance() {
         if ( self::$instance == null ) {
@@ -36,6 +38,7 @@ class Bot_buddy{
         $this->initialized = true;
         $this->settings = $this->get_settings();
         $this->include_files();
+        $this->init_services();
         $this->init_hooks();
     }
 
@@ -52,14 +55,70 @@ class Bot_buddy{
     }
 
     private function include_files() {
-        // Include necessary files here
+        // Include admin REST API endpoints and other includes
+        if ( file_exists( BOT_BUDDY_PLUGIN_DIR . 'admin/rest-api-admin.php' ) ) {
+            require_once BOT_BUDDY_PLUGIN_DIR . 'admin/rest-api-admin.php';
+        }
+    }
+
+    private function init_services() {
+        if ( class_exists( 'Bot_buddy_Admin_REST' ) && null === $this->rest_admin ) {
+            $this->rest_admin = new Bot_buddy_Admin_REST( $this );
+        }
     }
 
     private function init_hooks() {
         // Initialize hooks here
         add_action( 'wp_enqueue_scripts', [ $this, 'register_scripts' ], 10, 0 );
         add_action( 'admin_menu', [ $this, 'add_admin_menu' ], 10, 0 );
-        add_action( 'admin_post_botbuddy_save_settings', [ $this, 'save_settings' ] );
+        add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_assets' ], 999, 1 );
+        add_action( 'wp_ajax_botbuddy_save_settings', [ $this, 'save_settings_ajax' ] );
+        add_action( 'admin_post_botbuddy_clear_logs', [ $this, 'clear_logs' ] );
+        add_filter( 'script_loader_tag', [ $this, 'filter_admin_script_module_tag' ], 10, 3 );
+    }
+
+    private function log( $line ) {
+        $line = is_scalar( $line ) ? (string) $line : wp_json_encode( $line );
+        $ts = date_i18n( 'Y-m-d H:i:s' );
+        $prev = get_transient( self::LOG_TRANSIENT );
+        $prev = $prev ? "\n" . $prev : '';
+        $msg = '[' . $ts . '] ' . $line;
+
+        set_transient( self::LOG_TRANSIENT, $msg . $prev, 12 * HOUR_IN_SECONDS );
+
+        if ( defined( 'WP_CLI' ) && WP_CLI ) {
+            WP_CLI::log( $line );
+        }
+    }
+
+    public function add_log( $line ) {
+        $this->log( $line );
+    }
+
+    public function get_logs() {
+        $logs = get_transient( self::LOG_TRANSIENT );
+
+        return is_string( $logs ) ? $logs : '';
+    }
+
+    public function clear_logs() {
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_die( esc_html__( 'You do not have permission to clear logs.', 'botbuddy' ) );
+        }
+
+        check_admin_referer( 'botbuddy_clear_logs', 'botbuddy_clear_logs_nonce' );
+
+        delete_transient( self::LOG_TRANSIENT );
+
+        wp_safe_redirect(
+            add_query_arg(
+                [
+                    'page' => 'botbuddy-admin',
+                ],
+                admin_url( 'tools.php' )
+            )
+        );
+        exit;
     }
 
     public function get_settings() {
@@ -91,12 +150,17 @@ class Bot_buddy{
         ];
     }
 
-    public function save_settings() {
+    public function save_settings_ajax() {
         if ( ! current_user_can( 'manage_options' ) ) {
-            wp_die( esc_html__( 'You do not have permission to manage these settings.', 'botbuddy' ) );
+            wp_send_json_error(
+                [
+                    'message' => esc_html__( 'You do not have permission to manage these settings.', 'botbuddy' ),
+                ],
+                403
+            );
         }
 
-        check_admin_referer( 'botbuddy_save_settings', 'botbuddy_nonce' );
+        check_ajax_referer( 'botbuddy_save_settings', 'botbuddy_nonce' );
 
         $input = isset( $_POST['botbuddy_settings'] ) ? (array) $_POST['botbuddy_settings'] : [];
         $settings = $this->sanitize_settings( $input );
@@ -110,18 +174,15 @@ class Bot_buddy{
         update_option( 'bot_prompt_template', $settings['prompt_template'] );
         update_option( 'bot_pinecone_host', $settings['pinecone_host'] );
 
+        $this->log( 'BotBuddy settings were updated.' );
         $this->settings = $this->get_settings();
 
-        wp_safe_redirect(
-            add_query_arg(
-                [
-                    'page' => 'botbuddy-admin',
-                    'settings-updated' => '1',
-                ],
-                admin_url( 'tools.php' )
-            )
+        wp_send_json_success(
+            [
+                'message' => esc_html__( 'BotBuddy settings updated successfully.', 'botbuddy' ),
+                'logs' => $this->get_logs(),
+            ]
         );
-        exit;
     }
 
     public function register_scripts() {
@@ -141,14 +202,95 @@ class Bot_buddy{
         );
     }
 
-    public function render_admin_page() {
-        // Enqueue admin styles and scripts
-        wp_enqueue_style( 'botbuddy-admin-style', BOT_BUDDY_PLUGIN_URL . 'admin/assets/css/admin-page.css', [], BOT_BUDDY_VERSION, 'all' );
+    public function enqueue_admin_assets( $hook_suffix ) {
+        if ( 'tools_page_botbuddy-admin' !== $hook_suffix ) {
+            return;
+        }
 
+        wp_enqueue_style( 'botbuddy-admin-style', BOT_BUDDY_PLUGIN_URL . 'admin/assets/css/admin-page.css', [], BOT_BUDDY_VERSION, 'all' );
+        wp_enqueue_script( 'botbuddy-admin-script', BOT_BUDDY_PLUGIN_URL . 'admin/assets/js/admin-page.js', [], BOT_BUDDY_VERSION, true );
+        wp_localize_script(
+            'botbuddy-admin-script',
+            'BotBuddyAdmin',
+            [
+                'settings' => $this->get_settings(),
+                'ajax' => [
+                    'url' => admin_url( 'admin-ajax.php' ),
+                    'saveAction' => 'botbuddy_save_settings',
+                ],
+                'restApi' => [
+                    'chunkingUrl' => rest_url( 'botbuddy/v1/admin/chunking' ),
+                    'nonce' => wp_create_nonce( 'wp_rest' ),
+                ],
+            ]
+        );
+    }
+
+    public function filter_admin_script_module_tag( $tag, $handle, $src ) {
+        if ( 'botbuddy-admin-script' !== $handle ) {
+            return $tag;
+        }
+
+        return '<script type="module" src="' . esc_url( $src ) . '"></script>';
+    }
+
+    public function render_admin_page() {
         $settings = $this->get_settings();
-        $settings_updated = isset( $_GET['settings-updated'] ) && '1' === $_GET['settings-updated'];
+        $logs = $this->get_logs();
 
         include BOT_BUDDY_PLUGIN_DIR . 'admin/admin-page.php';
+    }
+
+    public function send_request( string $endpoint, array $payload = [], string $method = 'POST', array $args = [] , string $log_prefix = 'API Request' ) {
+        $method = strtoupper( $method );
+        $defaults = [
+            'headers' => [
+                'Content-Type' => 'application/json',
+            ],
+            'timeout' => 20,
+        ];
+        $request_args = wp_parse_args( $args, $defaults );
+
+        if ( 'GET' === $method ) {
+            if ( ! empty( $payload ) ) {
+                $endpoint = add_query_arg( $payload, $endpoint );
+            }
+            $response = wp_remote_get( $endpoint, $request_args );
+        } else {
+            $request_args['body'] = wp_json_encode( $payload );
+            $response = wp_remote_post( $endpoint, $request_args );
+        }
+
+        if ( is_wp_error( $response ) ) {
+            if ( method_exists( $this, 'add_log' ) ) {
+                $this->add_log( "{$log_prefix} request failed: " . $response->get_error_message() );
+            }
+            return $response;
+        }
+
+        $code = wp_remote_retrieve_response_code( $response );
+        $body = wp_remote_retrieve_body( $response );
+        $headers = wp_remote_retrieve_headers( $response );
+
+        if ( method_exists( $this, 'add_log' ) ) {
+            $this->add_log( "{$log_prefix} {$method} {$endpoint} -> {$code}" );
+        }
+
+        $decoded = json_decode( $body, true );
+        if ( json_last_error() !== JSON_ERROR_NONE ) {
+            return [
+                'code' => $code,
+                'body' => $body,
+                'headers' => is_array( $headers ) ? $headers : (array) $headers,
+            ];
+        }
+
+        return [
+            'code' => $code,
+            'body' => $decoded,
+            'raw' => $body,
+            'headers' => is_array( $headers ) ? $headers : (array) $headers,
+        ];
     }
 }
 
