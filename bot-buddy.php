@@ -292,6 +292,32 @@ class Bot_buddy{
             'headers' => is_array( $headers ) ? $headers : (array) $headers,
         ];
     }
+
+    public function get_vector(string $text = ""){
+        // endpoint and payload
+        $endpoint = 'https://router.huggingface.co/hf-inference/models/BAAI/bge-large-en-v1.5/pipeline/feature-extraction';
+        $payload  = ['inputs' => $text];
+
+        // args including Authorization header
+        $args = [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $this->settings['hugging_face_api_key'],
+                'Content-Type'  => 'application/json',
+            ],
+            'timeout' => 30,
+        ];
+
+        // call helper
+        $response = $this->send_request( $endpoint, $payload, 'POST', $args );
+
+        // handle errors or result
+        if ( is_wp_error( $response ) ) {
+            // transport error
+            $this->plugin->add_log( 'HF request error: ' . $response->get_error_message() );
+            return $response;
+        }
+        return $response['body'];
+    }
 }
 
 add_action( 'plugins_loaded', [ 'Bot_buddy', 'get_instance' ], 10, 0 );

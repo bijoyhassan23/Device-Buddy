@@ -52,7 +52,7 @@ class Bot_buddy_Admin_REST {
         $chunksWithVectors = [];
         if(is_array($chunks)){
             foreach($chunks as $chunk){
-                $vector = $this->get_vector($chunk['metadata']['text']);
+                $vector = $this->plugin->get_vector($chunk['metadata']['text']);
                 if( is_wp_error($vector) ) {
                     if ( method_exists( $this->plugin, 'add_log' ) ) {
                         $this->plugin->add_log( 'Error getting vector: ' . $vector->get_error_message() );
@@ -110,31 +110,6 @@ class Bot_buddy_Admin_REST {
                 'upsertResponse' => $upsertResponse ?? null,
             ],
         ], 200 );
-    }
-    private function get_vector(string $text = ""){
-        // endpoint and payload
-        $endpoint = 'https://router.huggingface.co/hf-inference/models/BAAI/bge-large-en-v1.5/pipeline/feature-extraction';
-        $payload  = ['inputs' => $text];
-
-        // args including Authorization header
-        $args = [
-            'headers' => [
-                'Authorization' => 'Bearer ' . $this->settings['hugging_face_api_key'],
-                'Content-Type'  => 'application/json',
-            ],
-            'timeout' => 30,
-        ];
-
-        // call helper
-        $response = $this->plugin->send_request( $endpoint, $payload, 'POST', $args );
-
-        // handle errors or result
-        if ( is_wp_error( $response ) ) {
-            // transport error
-            $this->plugin->add_log( 'HF request error: ' . $response->get_error_message() );
-            return $response;
-        }
-        return $response['body'];
     }
 
     private function upsert_vector(array $chunkWithVector = []){
