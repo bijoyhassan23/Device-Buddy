@@ -19,6 +19,8 @@ class Bot_buddy{
     private $initialized = false;
     private $settings = [];
     private $rest_admin = null;
+    private $shortcode = null;
+    private $public_api = null;
     
     public static function get_instance() {
         if ( self::$instance == null ) {
@@ -59,11 +61,23 @@ class Bot_buddy{
         if ( file_exists( BOT_BUDDY_PLUGIN_DIR . 'admin/rest-api-admin.php' ) ) {
             require_once BOT_BUDDY_PLUGIN_DIR . 'admin/rest-api-admin.php';
         }
+        if ( file_exists( BOT_BUDDY_PLUGIN_DIR . 'includes/class-bot-buddy-shortcode.php' ) ) {
+            require_once BOT_BUDDY_PLUGIN_DIR . 'includes/class-bot-buddy-shortcode.php';
+        }
+        if ( file_exists( BOT_BUDDY_PLUGIN_DIR . 'includes/class-bot-buddy-public-api.php' ) ) {
+            require_once BOT_BUDDY_PLUGIN_DIR . 'includes/class-bot-buddy-public-api.php';
+        }
     }
 
     private function init_services() {
         if ( class_exists( 'Bot_buddy_Admin_REST' ) && null === $this->rest_admin ) {
             $this->rest_admin = new Bot_buddy_Admin_REST( $this );
+        }
+        if ( class_exists( 'Bot_buddy_Shortcode' ) && null === $this->shortcode ) {
+            $this->shortcode = new Bot_buddy_Shortcode( $this );
+        }
+        if ( class_exists( 'Bot_buddy_Public_API' ) && null === $this->public_api ) {
+            $this->public_api = new Bot_buddy_Public_API( $this );
         }
     }
 
