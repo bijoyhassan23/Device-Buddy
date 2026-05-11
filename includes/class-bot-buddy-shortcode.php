@@ -12,9 +12,11 @@ class Bot_buddy_Shortcode {
      * @var Bot_buddy
      */
     private $plugin;
+    private $settings;
 
     public function __construct( $plugin ) {
         $this->plugin = $plugin;
+        $this->settings = $plugin->get_settings();
         add_action( 'wp_enqueue_scripts', [ $this, 'register_assets' ] );
         add_shortcode( 'botbuddy', [ $this, 'render_shortcode' ] );
     }
@@ -31,6 +33,8 @@ class Bot_buddy_Shortcode {
                     'memory' => rest_url( 'botbuddy/v1/public/memory' ),
                 ],
                 'nonce' => wp_create_nonce( 'botbuddy_public_api' ),
+                'botImageUrl' => $this->settings['bot_avatar'] ?? '',
+                'botName' => $this->settings['bot_name'] ?? 'BotBuddy',
             ]
         );
     }

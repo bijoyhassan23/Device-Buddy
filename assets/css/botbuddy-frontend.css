@@ -1,3 +1,530 @@
-/* BotBuddy frontend styles placeholder */
-.botbuddy-frontend {
+/* =====================================================
+   BotBuddy Frontend Styles
+   Modern AI Chatbot Interface
+   ===================================================== */
+
+:root {
+    --botbuddy-primary: #1f2937;
+    --botbuddy-primary-light: #374151;
+    --botbuddy-accent: #3b82f6;
+    --botbuddy-accent-hover: #2563eb;
+    --botbuddy-user-bg: #3b82f6;
+    --botbuddy-assistant-bg: #e5e7eb;
+    --botbuddy-text-primary: #1f2937;
+    --botbuddy-text-secondary: #6b7280;
+    --botbuddy-border: #d1d5db;
+    --botbuddy-bg-light: #f9fafb;
+    --botbuddy-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    --botbuddy-shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* =====================================================
+   CONTAINER & LAYOUT
+   ===================================================== */
+
+.botbuddy-container {
+    position: static;
+    width: 100%;
+    max-width: 760px;
+    min-height: 640px;
+    max-height: none;
+    margin: 24px auto;
+    display: flex;
+    flex-direction: column;
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: var(--botbuddy-shadow);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* =====================================================
+   CHAT HEADER
+   ===================================================== */
+
+.botbuddy-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, var(--botbuddy-primary) 0%, var(--botbuddy-primary-light) 100%);
+    color: white;
+    border-radius: 12px 12px 0 0;
+    flex-shrink: 0;
+}
+
+.botbuddy-header__content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.botbuddy-header__title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: white;
+}
+
+.botbuddy-header__subtitle {
+    margin: 0;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.botbuddy-header__close {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.botbuddy-header__close:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* =====================================================
+   MESSAGES AREA
+   ===================================================== */
+
+.botbuddy-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 16px;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.botbuddy-messages::-webkit-scrollbar {
+    width: 6px;
+}
+
+.botbuddy-messages::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.botbuddy-messages::-webkit-scrollbar-thumb {
+    background: var(--botbuddy-border);
+    border-radius: 3px;
+}
+
+.botbuddy-messages::-webkit-scrollbar-thumb:hover {
+    background: var(--botbuddy-text-secondary);
+}
+
+/* =====================================================
+   EMPTY STATE
+   ===================================================== */
+
+.botbuddy-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    text-align: center;
+    padding: 40px 16px;
+    color: var(--botbuddy-text-secondary);
+}
+
+.botbuddy-empty-state__icon {
+    width: 64px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--botbuddy-bg-light);
+    border-radius: 12px;
+    color: var(--botbuddy-text-secondary);
+}
+
+.botbuddy-empty-state__title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--botbuddy-text-primary);
+}
+
+.botbuddy-empty-state__text {
+    margin: 0;
+    font-size: 13px;
+    color: var(--botbuddy-text-secondary);
+    line-height: 1.5;
+}
+
+/* =====================================================
+   MESSAGE BUBBLES
+   ===================================================== */
+
+.botbuddy-message {
+    display: flex;
+    animation: fadeIn 0.2s ease-out;
+    margin-bottom: 4px;
+    gap: 10px;
+    align-items: flex-end;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* User Message (Right aligned) */
+.botbuddy-message--user {
+    justify-content: flex-end;
+}
+
+.botbuddy-message--user .botbuddy-message__content {
+    background: var(--botbuddy-user-bg);
+    color: white;
+    border-radius: 16px 16px 0 16px;
+    max-width: 85%;
+}
+
+/* Assistant Message (Left aligned) */
+.botbuddy-message--assistant {
+    justify-content: flex-start;
+}
+
+.botbuddy-message--assistant .botbuddy-message__content {
+    background: var(--botbuddy-assistant-bg);
+    color: var(--botbuddy-text-primary);
+    border-radius: 16px 16px 16px 4px;
+    max-width: 100%;
+}
+
+.botbuddy-message__body {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    max-width: 85%;
+}
+
+.botbuddy-message__meta {
+    font-size: 12px;
+    line-height: 1;
+    font-weight: 600;
+    color: var(--botbuddy-text-secondary);
+}
+
+.botbuddy-message__avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--botbuddy-primary) 0%, var(--botbuddy-accent) 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    overflow: hidden;
+    box-shadow: var(--botbuddy-shadow-sm);
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.botbuddy-message__avatar-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.botbuddy-message__avatar--placeholder {
+    background: linear-gradient(135deg, var(--botbuddy-primary) 0%, var(--botbuddy-primary-light) 100%);
+}
+
+.botbuddy-message__content {
+    padding: 10px 14px;
+    font-size: 14px;
+    line-height: 1.4;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+    box-shadow: var(--botbuddy-shadow-sm);
+}
+
+.botbuddy-message__content--typing {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    min-height: 20px;
+}
+
+/* =====================================================
+   TYPING INDICATOR
+   ===================================================== */
+
+.botbuddy-typing-indicator {
+    margin-bottom: 4px;
+}
+
+.botbuddy-typing__dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--botbuddy-text-secondary);
+    margin: 0 2px;
+    animation: typing 1.4s infinite;
+}
+
+.botbuddy-typing__dot:nth-child(1) {
+    animation-delay: 0s;
+}
+
+.botbuddy-typing__dot:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.botbuddy-typing__dot:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes typing {
+    0%, 60%, 100% {
+        opacity: 0.3;
+        transform: translateY(0);
+    }
+    30% {
+        opacity: 1;
+        transform: translateY(-8px);
+    }
+}
+
+/* =====================================================
+   INPUT AREA
+   ===================================================== */
+
+.botbuddy-input-area {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px;
+    background: var(--botbuddy-bg-light);
+    border-top: 1px solid var(--botbuddy-border);
+    border-radius: 0 0 12px 12px;
+    flex-shrink: 0;
+}
+
+.botbuddy-input-wrapper {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    background: white;
+    border: 1px solid var(--botbuddy-border);
+    border-radius: 8px;
+    padding: 8px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.botbuddy-input-wrapper:focus-within {
+    border-color: var(--botbuddy-accent);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.botbuddy-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 8px 4px;
+    font-size: 14px;
+    color: var(--botbuddy-text-primary);
+    font-family: inherit;
+    outline: none;
+    resize: none;
+}
+
+.botbuddy-input::placeholder {
+    color: var(--botbuddy-text-secondary);
+}
+
+.botbuddy-send-btn {
+    background: var(--botbuddy-accent);
+    border: none;
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease, transform 0.1s ease;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.botbuddy-send-btn:hover:not(:disabled) {
+    background: var(--botbuddy-accent-hover);
+}
+
+.botbuddy-send-btn:active:not(:disabled) {
+    transform: scale(0.95);
+}
+
+.botbuddy-send-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.botbuddy-send-btn--loading {
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.6;
+    }
+}
+
+/* Clear button */
+.botbuddy-clear-btn {
+    align-self: flex-end;
+    background: transparent;
+    border: 1px solid var(--botbuddy-border);
+    color: var(--botbuddy-text-secondary);
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.botbuddy-clear-btn:hover {
+    background: var(--botbuddy-bg-light);
+    border-color: var(--botbuddy-text-secondary);
+    color: var(--botbuddy-text-primary);
+}
+
+/* =====================================================
+   RESPONSIVE DESIGN
+   ===================================================== */
+
+@media (max-width: 640px) {
+    .botbuddy-container {
+        position: static;
+        width: 100%;
+        max-width: 100%;
+        min-height: 100vh;
+        max-height: 100%;
+        margin: 0;
+        border-radius: 0;
+        animation: slideFromBottom 0.3s ease-out;
+    }
+
+    @keyframes slideFromBottom {
+        from {
+            transform: translateY(100%);
+        }
+        to {
+            transform: translateY(0);
+        }
+    }
+
+    .botbuddy-header {
+        border-radius: 0;
+    }
+
+    .botbuddy-message--user .botbuddy-message__content {
+        max-width: 90%;
+    }
+
+    .botbuddy-message--assistant .botbuddy-message__content {
+        max-width: 90%;
+    }
+
+    .botbuddy-message__body {
+        max-width: 90%;
+    }
+
+    .botbuddy-empty-state {
+        padding: 60px 16px;
+    }
+}
+
+/* =====================================================
+   ACCESSIBILITY
+   ===================================================== */
+
+.botbuddy-container:focus-visible {
+    outline: 2px solid var(--botbuddy-accent);
+    outline-offset: 2px;
+}
+
+.botbuddy-send-btn:focus-visible,
+.botbuddy-clear-btn:focus-visible,
+.botbuddy-header__close:focus-visible {
+    outline: 2px solid var(--botbuddy-accent);
+    outline-offset: 2px;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --botbuddy-primary: #111827;
+        --botbuddy-primary-light: #1f2937;
+        --botbuddy-assistant-bg: #374151;
+        --botbuddy-text-primary: #f3f4f6;
+        --botbuddy-text-secondary: #d1d5db;
+        --botbuddy-border: #4b5563;
+        --botbuddy-bg-light: #1f2937;
+    }
+
+    .botbuddy-container {
+        background: #111827;
+    }
+
+    .botbuddy-input-wrapper {
+        background: #1f2937;
+    }
+
+    .botbuddy-messages {
+        background: #111827;
+    }
+
+    .botbuddy-input-area {
+        background: #0f172a;
+        border-top-color: #4b5563;
+    }
+
+    .botbuddy-message--assistant .botbuddy-message__content {
+        box-shadow: none;
+        border: 1px solid #4b5563;
+    }
 }

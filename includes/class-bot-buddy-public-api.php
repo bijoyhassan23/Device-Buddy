@@ -147,7 +147,7 @@ class Bot_buddy_Public_API {
             'timeout' => 30,
         ];
 
-        $response = $this->plugin->send_request( $endpoint, $payload, 'POST', $args );
+        $response = $this->plugin->send_request( $endpoint, $payload, 'POST', $args, 'Send request to Pinecone' );
 
         if ( is_wp_error( $response ) ) {
             $this->plugin->add_log( 'Pinecone query error: ' . $response->get_error_message() );
@@ -156,7 +156,7 @@ class Bot_buddy_Public_API {
         if ( ! isset( $response['body']['matches'] ) ) {
             return new WP_Error( 'botbuddy_pinecone_error', __( 'Error occurred while querying Pinecone.', 'botbuddy' ) );
         }
-        return $response['body']['matches'];
+        return $response['body']['matches'] ?? [];
     }
 
     private function message_payload($data, $similar_chunks){
@@ -194,7 +194,7 @@ class Bot_buddy_Public_API {
             ],
             'timeout' => 50, 
         ];
-        $response = $this->plugin->send_request( $endpoint, $payload, 'POST', $args );
+        $response = $this->plugin->send_request( $endpoint, $payload, 'POST', $args, 'Send request to deepseek' );
         if ( is_wp_error( $response ) ) {
             // transport error
             $this->plugin->add_log( 'HF request error: ' . $response->get_error_message() );
