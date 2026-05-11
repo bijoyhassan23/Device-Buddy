@@ -1,12 +1,8 @@
-/* BotBuddy frontend script placeholder */
 
-// document.addEventListener('DOMContentLoaded', function () {
-
-// });
 
     const root = document.querySelector( '[data-botbuddy-shortcode="botbuddy"]' );
-    // if (!root) return;
 
+    // Ensure the API endpoint and nonce are available
     const sendMessage = async ( message ) => {
         const response = await fetch( BotBuddyFrontend.apiEndpoint.message, {
             method: 'POST',
@@ -24,7 +20,7 @@
     // sendMessage( 'Hello from the frontend' ).then( console.log ).catch( console.error );
 
     root.botbuddySendMessage = sendMessage;
-    let test = {
+    let message = {
         conversation: [
             {
                 "role": "user",
@@ -39,8 +35,17 @@
         memory: "User is Bijoy, 26 years old. He previously asked about his age."
     };
 
-    sendMessage(test).then( console.log ).catch( console.error );
+    sendMessage(message).then( console.log ).catch( console.error );
+    /*
+    response from the above message will be like this:
+    [
+        'success' => true,
+        'message' => 'Public endpoint structure is ready.',
+        'received' => $get_response,
+    ]
+     */
 
+    // Memory API test
     const createMemory = async ( message ) => {
         const response = await fetch( BotBuddyFrontend.apiEndpoint.memory, {
             method: 'POST',
@@ -53,15 +58,18 @@
 
         return response.json();
     };
-    createMemory({
+    let memoerytest = {
         memory: "User is Bijoy, 26 years old. He previously asked about his age.",
         message: "What I asked previously",
         response: "you asked about your age and I remember that you are 26 years old."
-    }).then( console.log ).catch( console.error );
-/*
-{
-    "success": true,
-    "message": "Public endpoint structure is ready.",
-    memory: "User is Bijoy, 26 years old. He previously asked about his age.",
-}
-*/
+    };
+    createMemory(memoerytest).then( console.log ).catch( console.error );
+
+    /*
+    response from the above memory test will be like this:
+    [
+        'success' => true,
+        'message' => 'Memory request route is ready.',
+        'received' => $get_response,
+    ]
+    */
