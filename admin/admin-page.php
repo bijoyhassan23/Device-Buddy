@@ -21,6 +21,7 @@ $pinecone_api_key = isset( $settings['pinecone_api_key'] ) ? $settings['pinecone
 $pinecone_host = isset( $settings['pinecone_host'] ) ? $settings['pinecone_host'] : '';
 $system_prompt = isset( $settings['system_prompt'] ) ? $settings['system_prompt'] : '';
 $prompt_template = isset( $settings['prompt_template'] ) ? $settings['prompt_template'] : '';
+$memory_prompt = isset( $settings['memory_prompt'] ) ? $settings['memory_prompt'] : '';
 ?>
 
 <div class="wrap botbuddy-admin-page">
@@ -117,6 +118,11 @@ $prompt_template = isset( $settings['prompt_template'] ) ? $settings['prompt_tem
                 <label class="botbuddy-field">
                     <span>Prompt Template</span>
                     <textarea name="botbuddy_settings[prompt_template]" rows="10" placeholder="Use %s placeholders for context and question."><?php echo esc_textarea( $prompt_template ); ?></textarea>
+                </label>
+
+                <label class="botbuddy-field">
+                    <span>Memory Prompt Template</span>
+                    <textarea name="botbuddy_settings[memory_prompt]" rows="10" placeholder="Template for saving AI memory."><?php echo esc_textarea( $memory_prompt ); ?></textarea>
                 </label>
 
                 <div class="botbuddy-template-hint">

@@ -137,18 +137,29 @@ class Bot_buddy{
 
     public function get_settings() {
         return [
-            'bot_name' => get_option( 'bot_name', 'BotBuddy' ),
-            'bot_avatar' => get_option( 'bot_avatar', BOT_BUDDY_PLUGIN_URL . 'assets/images/bot-avatar.avif' ),
-            'doc_id' => get_option( 'bot_doc_id', '' ),
-            'hugging_face_api_key' => get_option( 'bot_hugging_face_api_key', '' ),
-            'pinecone_api_key' => get_option( 'bot_pinecone_api_key', '' ),
-            'pinecone_host' => get_option( 'bot_pinecone_host', '' ),
-            'system_prompt' => get_option( 'bot_system_prompt', "You are a helpful assistant.\n\nMemory:\n%s" ),
-            'prompt_template' => get_option(
+            'bot_name' => $this->get_option_or_default( 'bot_name', 'BotBuddy' ),
+            'bot_avatar' => $this->get_option_or_default( 'bot_avatar', BOT_BUDDY_PLUGIN_URL . 'assets/images/bot-avatar.avif' ),
+            'doc_id' => $this->get_option_or_default( 'bot_doc_id', '' ),
+            'hugging_face_api_key' => $this->get_option_or_default( 'bot_hugging_face_api_key', '' ),
+            'pinecone_api_key' => $this->get_option_or_default( 'bot_pinecone_api_key', '' ),
+            'pinecone_host' => $this->get_option_or_default( 'bot_pinecone_host', '' ),
+            'system_prompt' => $this->get_option_or_default( 'bot_system_prompt', "You are a helpful assistant.\n\nMemory:\n%s" ),
+            'prompt_template' => $this->get_option_or_default(
                 'bot_prompt_template',
                 "Answer the question using the provided context or our previous conversation.\nRespond in a natural, human-friendly sentence.\n\nIf the answer is not in the context, say:\n'I don't know based on the provided information.'\n\nContext:\n%s\n\nQuestion:\n%s"
             ),
+            'memory_prompt' => $this->get_option_or_default( 'bot_memory_prompt', "You are a memory manager for an AI assistant.\n\nYour task is to update the existing memory using the latest conversation.\n\nRules:\n- Keep only important long-term information\n- Keep user identity, preferences, skills, goals, and important ongoing topics\n- Remove repetition\n- Keep memory short and clean\n- Write in simple natural language\n- Do not include temporary small talk\n- Do not explain anything\n- Return ONLY the updated memory text\n- Keep memory under 150 words\n- Preserve important previous memory unless it becomes outdated\n\nCurrent Memory:\n%s\n\nUser Message:\n%s\n\nAI Reply:\n%s" ),
         ];
+    }
+
+    private function get_option_or_default( $option_name, $default_value ) {
+        $value = get_option( $option_name, null );
+
+        if ( ! is_scalar( $value ) || trim( (string) $value ) === '' ) {
+            return $default_value;
+        }
+
+        return $value;
     }
 
     private function sanitize_settings( $input ) {
