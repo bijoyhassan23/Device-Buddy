@@ -30,6 +30,16 @@ class Bot_buddy_Public_API {
                 'permission_callback' => [ $this, 'validate_request_nonce' ],
             ]
         );
+
+        register_rest_route(
+            'botbuddy/v1',
+            '/public/memory',
+            [
+                'methods' => 'POST',
+                'callback' => [ $this, 'handle_memory_request' ],
+                'permission_callback' => [ $this, 'validate_request_nonce' ],
+            ]
+        );
     }
 
     public function validate_request_nonce( WP_REST_Request $request ) {
@@ -65,13 +75,47 @@ class Bot_buddy_Public_API {
         $similar_chunks = $this->get_similar_chunks($message) ?? [];
         $payload = $this->message_payload($data, $similar_chunks);
         $get_response = $this->send_to_deepseek($payload);
-        return rest_ensure_response($get_response);
         return rest_ensure_response(
             [
                 'success' => true,
                 'message' => 'Public endpoint structure is ready.',
-                'received' => $data,
-                'memory' => 'this is the memory data that will be used to generate the response in the future',
+                'received' => $get_response,
+            ]
+        );
+    }
+
+    public function handle_memory_request( WP_REST_Request $request ) {
+        $data = $request->get_json_params();
+        try{
+            $message = sprintf($this->settings['memory_prompt'], $data['memory'] ?? '', $data['message'] ?? '', $data['response'] ?? '');
+        }catch(Exception $e){
+            return new WP_Error(
+                'botbuddy_memory_prompt_error',
+                __( 'Error generating memory prompt: ' . $e->getMessage(), 'botbuddy' ),
+                [
+                    'status' => 500,
+                ]
+            );
+        }
+        $payload = [
+            'messages' => [
+                [
+                    "role" => "system",
+                    "content" => "You are an AI memory manager. Your job is to maintain concise long-term memory from conversations."
+                ],
+                [
+                    'role' => 'user',
+                    'content' => $message
+                ]
+            ],
+        ];
+        $get_response = $this->send_to_deepseek($payload);
+
+        return rest_ensure_response(
+            [
+                'success' => true,
+                'message' => 'Memory request route is ready.',
+                'received' => $get_response,
             ]
         );
     }
@@ -124,21 +168,25 @@ class Bot_buddy_Public_API {
         }
         $prompt = sprintf($this->settings['prompt_template'], $context, $data['message'] ?? '');
         $system_prompt = sprintf($this->settings['system_prompt'], $data['memory'] ?? '');
-        $payload = [
-            "messages" => [],
-            "model" => "deepseek-ai/DeepSeek-V4-Pro:novita",
-            "stream" => false
-        ];
+        $payload = ["messages" => []];
         $payload["messages"][] = [
             "role" => "system",
             "content" => $system_prompt
         ];
         $payload["messages"] = array_merge($payload["messages"], $data['conversation'] ?? []);
+        $payload["messages"][] = [
+            "role" => "user",
+            "content" => $prompt
+        ];
         return $payload;
     }
 
     private function send_to_deepseek($payload){
         $endpoint = 'https://router.huggingface.co/v1/chat/completions';
+        $payload = array_merge($payload, [
+            'model' => 'deepseek-ai/DeepSeek-V4-Pro:novita',
+            'stream' => false,
+        ]);
         $args = [
             'headers' => [
                 'Authorization' => 'Bearer ' . $this->settings['hugging_face_api_key'],
@@ -147,7 +195,7 @@ class Bot_buddy_Public_API {
             'timeout' => 50, 
         ];
         $response = $this->plugin->send_request( $endpoint, $payload, 'POST', $args );
-                if ( is_wp_error( $response ) ) {
+        if ( is_wp_error( $response ) ) {
             // transport error
             $this->plugin->add_log( 'HF request error: ' . $response->get_error_message() );
             return $response;

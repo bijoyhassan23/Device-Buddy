@@ -26,7 +26,10 @@ class Bot_buddy_Shortcode {
             'botbuddy-frontend-script',
             'BotBuddyFrontend',
             [
-                'apiEndpoint' => rest_url( 'botbuddy/v1/public/message' ),
+                'apiEndpoint' => [
+                    'message' => rest_url( 'botbuddy/v1/public/message' ),
+                    'memory' => rest_url( 'botbuddy/v1/public/memory' ),
+                ],
                 'nonce' => wp_create_nonce( 'botbuddy_public_api' ),
             ]
         );
