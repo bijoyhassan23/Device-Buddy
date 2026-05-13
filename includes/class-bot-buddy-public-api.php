@@ -74,7 +74,7 @@ class Bot_buddy_Public_API {
         $message = sanitize_text_field($data['message']);
         $similar_chunks = $this->get_similar_chunks($message) ?? [];
         $payload = $this->message_payload($data, $similar_chunks);
-        $get_response = $this->send_to_deepseek($payload);
+        $get_response = $this->send_to_llm($payload);
         return rest_ensure_response(
             [
                 'success' => true,
@@ -109,7 +109,7 @@ class Bot_buddy_Public_API {
                 ]
             ],
         ];
-        $get_response = $this->send_to_deepseek($payload);
+        $get_response = $this->send_to_llm($payload);
 
         return rest_ensure_response(
             [
@@ -181,6 +181,16 @@ class Bot_buddy_Public_API {
         return $payload;
     }
 
+    private function send_to_llm($payload){
+        $llm_provider = $this->settings['llm_provider'] ?? 'hugging_face';
+        if($llm_provider === 'hugging_face'){
+            return $this->send_to_deepseek($payload);
+        } elseif($llm_provider === 'chatgpt'){
+            return $this->send_to_chatgpt($payload);
+        }
+        return new WP_Error( 'botbuddy_invalid_llm', __( 'Invalid LLM provider configured.', 'botbuddy' ) );
+    }
+
     private function send_to_deepseek($payload){
         $endpoint = 'https://router.huggingface.co/v1/chat/completions';
         $payload = array_merge($payload, [
@@ -198,6 +208,28 @@ class Bot_buddy_Public_API {
         if ( is_wp_error( $response ) ) {
             // transport error
             $this->plugin->add_log( 'HF request error: ' . $response->get_error_message() );
+            return $response;
+        }
+        return $response['body']['choices'][0]['message']['content'] ?? '';
+    }
+
+    function send_to_chatgpt($payload){
+        $endpoint = 'https://api.openai.com/v1/chat/completions';
+        $payload = array_merge($payload, [
+            'model' => 'gpt-4.1-mini',
+            'stream' => false,
+        ]);
+        $args = [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $this->settings['chatgpt_api_key'],
+                'Content-Type'  => 'application/json',
+            ],
+            'timeout' => 50, 
+        ];
+        $response = $this->plugin->send_request( $endpoint, $payload, 'POST', $args, 'Send request to chatgpt' );
+        if ( is_wp_error( $response ) ) {
+            // transport error
+            $this->plugin->add_log( 'ChatGPT request error: ' . $response->get_error_message() );
             return $response;
         }
         return $response['body']['choices'][0]['message']['content'] ?? '';
