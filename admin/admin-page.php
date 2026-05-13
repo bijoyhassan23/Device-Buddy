@@ -15,8 +15,10 @@ if ( ! isset( $logs ) ) {
 
 $bot_name = isset( $settings['bot_name'] ) ? $settings['bot_name'] : '';
 $bot_avatar = isset( $settings['bot_avatar'] ) ? $settings['bot_avatar'] : '';
+$llm_provider = isset( $settings['llm_provider'] ) ? $settings['llm_provider'] : 'hugging_face';
 $doc_id = isset( $settings['doc_id'] ) ? $settings['doc_id'] : '';
 $hugging_face_api_key = isset( $settings['hugging_face_api_key'] ) ? $settings['hugging_face_api_key'] : '';
+$chatgpt_api_key = isset( $settings['chatgpt_api_key'] ) ? $settings['chatgpt_api_key'] : '';
 $pinecone_api_key = isset( $settings['pinecone_api_key'] ) ? $settings['pinecone_api_key'] : '';
 $pinecone_host = isset( $settings['pinecone_host'] ) ? $settings['pinecone_host'] : '';
 $system_prompt = isset( $settings['system_prompt'] ) ? $settings['system_prompt'] : '';
@@ -82,9 +84,26 @@ $memory_prompt = isset( $settings['memory_prompt'] ) ? $settings['memory_prompt'
                 </div>
 
                 <label class="botbuddy-field">
-                    <span>Hugging Face API Key</span>
-                    <input type="text" name="botbuddy_settings[hugging_face_api_key]" value="<?php echo esc_attr( $hugging_face_api_key ); ?>" placeholder="hf_..." autocomplete="off" />
+                    <span>LLM Provider</span>
+                    <select name="botbuddy_settings[llm_provider]" id="botbuddy-llm-provider">
+                        <option value="hugging_face" <?php selected( $llm_provider, 'hugging_face' ); ?>>Hugging Face</option>
+                        <option value="chatgpt" <?php selected( $llm_provider, 'chatgpt' ); ?>>ChatGPT</option>
+                    </select>
                 </label>
+
+                <div class="botbuddy-llm-field" data-provider-field="hugging_face">
+                    <label class="botbuddy-field">
+                        <span>Hugging Face API Key</span>
+                        <input type="text" name="botbuddy_settings[hugging_face_api_key]" value="<?php echo esc_attr( $hugging_face_api_key ); ?>" placeholder="hf_..." autocomplete="off" />
+                    </label>
+                </div>
+
+                <div class="botbuddy-llm-field" data-provider-field="chatgpt">
+                    <label class="botbuddy-field">
+                        <span>ChatGPT API Key</span>
+                        <input type="text" name="botbuddy_settings[chatgpt_api_key]" value="<?php echo esc_attr( $chatgpt_api_key ); ?>" placeholder="sk-..." autocomplete="off" />
+                    </label>
+                </div>
 
                 <label class="botbuddy-field">
                     <span>Pinecone API Key</span>

@@ -139,8 +139,10 @@ class Bot_buddy{
         return [
             'bot_name' => $this->get_option_or_default( 'bot_name', 'BotBuddy' ),
             'bot_avatar' => $this->get_option_or_default( 'bot_avatar', BOT_BUDDY_PLUGIN_URL . 'assets/images/bot-avatar.avif' ),
+            'llm_provider' => $this->get_option_or_default( 'bot_llm_provider', 'hugging_face' ),
             'doc_id' => $this->get_option_or_default( 'bot_doc_id', '' ),
             'hugging_face_api_key' => $this->get_option_or_default( 'bot_hugging_face_api_key', '' ),
+            'chatgpt_api_key' => $this->get_option_or_default( 'bot_chatgpt_api_key', '' ),
             'pinecone_api_key' => $this->get_option_or_default( 'bot_pinecone_api_key', '' ),
             'pinecone_host' => $this->get_option_or_default( 'bot_pinecone_host', '' ),
             'system_prompt' => $this->get_option_or_default( 'bot_system_prompt', "You are a helpful assistant.\n\nMemory:\n%s" ),
@@ -163,15 +165,23 @@ class Bot_buddy{
     }
 
     private function sanitize_settings( $input ) {
+        $llm_provider = isset( $input['llm_provider'] ) ? sanitize_key( wp_unslash( $input['llm_provider'] ) ) : 'hugging_face';
+        if ( ! in_array( $llm_provider, [ 'hugging_face', 'chatgpt' ], true ) ) {
+            $llm_provider = 'hugging_face';
+        }
+
         return [
             'bot_name' => isset( $input['bot_name'] ) ? sanitize_text_field( wp_unslash( $input['bot_name'] ) ) : '',
             'bot_avatar' => isset( $input['bot_avatar'] ) ? esc_url_raw( wp_unslash( $input['bot_avatar'] ) ) : '',
+            'llm_provider' => $llm_provider,
             'doc_id' => isset( $input['doc_id'] ) ? sanitize_text_field( wp_unslash( $input['doc_id'] ) ) : '',
             'hugging_face_api_key' => isset( $input['hugging_face_api_key'] ) ? sanitize_text_field( wp_unslash( $input['hugging_face_api_key'] ) ) : '',
+            'chatgpt_api_key' => isset( $input['chatgpt_api_key'] ) ? sanitize_text_field( wp_unslash( $input['chatgpt_api_key'] ) ) : '',
             'pinecone_api_key' => isset( $input['pinecone_api_key'] ) ? sanitize_text_field( wp_unslash( $input['pinecone_api_key'] ) ) : '',
             'pinecone_host' => isset( $input['pinecone_host'] ) ? esc_url_raw( wp_unslash( $input['pinecone_host'] ) ) : '',
             'system_prompt' => isset( $input['system_prompt'] ) ? sanitize_textarea_field( wp_unslash( $input['system_prompt'] ) ) : '',
             'prompt_template' => isset( $input['prompt_template'] ) ? sanitize_textarea_field( wp_unslash( $input['prompt_template'] ) ) : '',
+            'memory_prompt' => isset( $input['memory_prompt'] ) ? sanitize_textarea_field( wp_unslash( $input['memory_prompt'] ) ) : '',
         ];
     }
 
@@ -192,11 +202,14 @@ class Bot_buddy{
 
         update_option( 'bot_name', $settings['bot_name'] );
         update_option( 'bot_avatar', $settings['bot_avatar'] );
+        update_option( 'bot_llm_provider', $settings['llm_provider'] );
         update_option( 'bot_doc_id', $settings['doc_id'] );
         update_option( 'bot_hugging_face_api_key', $settings['hugging_face_api_key'] );
+        update_option( 'bot_chatgpt_api_key', $settings['chatgpt_api_key'] );
         update_option( 'bot_pinecone_api_key', $settings['pinecone_api_key'] );
         update_option( 'bot_system_prompt', $settings['system_prompt'] );
         update_option( 'bot_prompt_template', $settings['prompt_template'] );
+        update_option( 'bot_memory_prompt', $settings['memory_prompt'] );
         update_option( 'bot_pinecone_host', $settings['pinecone_host'] );
 
         $this->log( 'BotBuddy settings were updated.' );

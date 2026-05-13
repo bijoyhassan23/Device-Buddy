@@ -2,11 +2,14 @@ import { RecursiveCharacterTextSplitter } from "https://cdn.jsdelivr.net/npm/@la
 document.addEventListener('DOMContentLoaded', function () {
     const settingsForm = document.querySelector('.botbuddy-settings-form');
     const updateSettingsButton = document.getElementById('botbuddy-update-settings');
+    const llmProviderSelect = document.getElementById('botbuddy-llm-provider');
     let savingSettings = false;
 
     if (settingsForm) {
         settingsForm.addEventListener('submit', saveSettingsViaAjax);
     }
+
+    initializeLlmProviderFieldVisibility();
 
     let chunkingButton = document.getElementById('botbuddy-create-chunking');
     if (!chunkingButton) {
@@ -64,6 +67,24 @@ document.addEventListener('DOMContentLoaded', function () {
                 chunkingButton.textContent = 'Run Chunking';
             }
         };
+    }
+
+    function initializeLlmProviderFieldVisibility() {
+        if (!llmProviderSelect) {
+            return;
+        }
+
+        const applyVisibility = () => {
+            const selectedProvider = llmProviderSelect.value;
+            document.querySelectorAll('[data-provider-field]').forEach((field) => {
+                const provider = field.getAttribute('data-provider-field');
+                const isVisible = provider === selectedProvider;
+                field.classList.toggle('botbuddy-hidden', !isVisible);
+            });
+        };
+
+        applyVisibility();
+        llmProviderSelect.addEventListener('change', applyVisibility);
     }
 
     async function saveSettingsViaAjax(event) {
