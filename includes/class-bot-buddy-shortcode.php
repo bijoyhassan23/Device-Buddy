@@ -30,6 +30,7 @@ class Bot_buddy_Shortcode {
             [
                 'apiEndpoint' => [
                     'message' => rest_url( 'botbuddy/v1/public/message' ),
+                    'message_stream' => rest_url( 'botbuddy/v1/public/message_stream' ),
                     'memory' => rest_url( 'botbuddy/v1/public/memory' ),
                 ],
                 'nonce' => wp_create_nonce( 'botbuddy_public_api' ),

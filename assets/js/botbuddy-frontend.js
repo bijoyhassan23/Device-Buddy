@@ -382,7 +382,12 @@
                 memory: memory || '',
             };
 
-            const apiResponse = await sendMessage(apiPayload);
+            // const apiResponse = await sendMessage(apiPayload);
+            // Streamed path (uses server-side streaming endpoint)
+            await handleStreamSendMessage(apiPayload);
+            // When using streaming, the assistant message is handled by the stream handler.
+            // Return early to avoid running the non-streaming response handling below.
+            return;
 
             // Hide typing indicator
             hideTypingIndicator();
@@ -432,6 +437,145 @@
         } finally {
             setSendButtonLoading(false);
         }
+    }
+
+    /**
+     * Stream-enabled send message flow (POST -> SSE / stream reader)
+     * NOTE: This function is added as a streaming alternative but is not
+     * automatically called until you wire it in (the original call was
+     * intentionally commented out above).
+     */
+    async function handleStreamSendMessage(apiPayload) {
+        const streamEndpoint = (BotBuddyFrontend.apiEndpoint.message || '').replace('/message', '/message_stream');
+        if (!streamEndpoint) {
+            throw new Error('Streaming endpoint not configured');
+        }
+
+        // Remove generic typing indicator (we'll render a single assistant placeholder)
+        hideTypingIndicator();
+
+        // Create assistant placeholder
+        const messagesArea = document.querySelector('.botbuddy-messages');
+        if (!messagesArea) return;
+
+        const assistantEl = document.createElement('div');
+        assistantEl.className = 'botbuddy-message botbuddy-message--assistant';
+        assistantEl.dataset.streaming = '1';
+
+        const avatarEl = document.createElement('div');
+        avatarEl.className = 'botbuddy-message__avatar';
+        if (botImageUrl) {
+            const img = document.createElement('img'); img.className = 'botbuddy-message__avatar-image'; img.src = botImageUrl; img.alt = botName; img.loading = 'lazy'; avatarEl.appendChild(img);
+        } else { avatarEl.textContent = botName.charAt(0).toUpperCase(); }
+
+        const bodyEl = document.createElement('div');
+        bodyEl.className = 'botbuddy-message__body';
+        const metaEl = document.createElement('div'); metaEl.className = 'botbuddy-message__meta'; metaEl.textContent = botName;
+        const contentEl = document.createElement('div'); contentEl.className = 'botbuddy-message__content';
+
+        // Stream loader shown inside the message content until the first token arrives
+        const loaderEl = document.createElement('div');
+        loaderEl.className = 'botbuddy-stream-loader';
+        loaderEl.innerHTML = '<span class="botbuddy-typing__dot"></span><span class="botbuddy-typing__dot"></span><span class="botbuddy-typing__dot"></span>';
+        contentEl.appendChild(loaderEl);
+
+        bodyEl.appendChild(metaEl);
+        bodyEl.appendChild(contentEl);
+        assistantEl.appendChild(avatarEl);
+        assistantEl.appendChild(bodyEl);
+
+        messagesArea.appendChild(assistantEl);
+        scrollToBottom();
+
+        let response;
+        try {
+            response = await fetch(streamEndpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-BotBuddy-Nonce': BotBuddyFrontend.nonce,
+                },
+                body: JSON.stringify(apiPayload),
+            });
+        } catch (err) {
+            console.error('Streaming request failed:', err);
+            contentEl.textContent = 'Error starting streaming response.';
+            hideTypingIndicator();
+            return;
+        }
+
+        if (!response.body) {
+            const text = await response.text();
+            contentEl.textContent = text || 'No streaming body.';
+            hideTypingIndicator();
+            return;
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let finalText = '';
+        let streamStarted = false;
+
+        // Read loop
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+
+            // SSE frames are separated by double newlines
+            let parts = buffer.split('\n\n');
+            buffer = parts.pop(); // remainder
+
+            for (const part of parts) {
+                const lines = part.split('\n').map(l => l.trim());
+                for (const line of lines) {
+                    if (!line) continue;
+                    if (line.startsWith('data:')) {
+                        const payloadText = line.replace(/^data:\s*/, '');
+                        if (payloadText === '[DONE]') continue;
+                        let parsed = null;
+                        try { parsed = JSON.parse(payloadText); } catch (e) { parsed = null; }
+                        if (parsed && parsed.token) {
+                            if (!streamStarted) {
+                                streamStarted = true;
+                                if (loaderEl && loaderEl.parentNode) loaderEl.parentNode.removeChild(loaderEl);
+                            }
+
+                            finalText += parsed.token;
+                            contentEl.textContent = finalText;
+                            scrollToBottom();
+                        } else if (parsed && parsed.text) {
+                            if (!streamStarted) {
+                                streamStarted = true;
+                                if (loaderEl && loaderEl.parentNode) loaderEl.parentNode.removeChild(loaderEl);
+                            }
+
+                            finalText = parsed.text;
+                            contentEl.textContent = finalText;
+                            scrollToBottom();
+                        }
+                    }
+                }
+            }
+        }
+
+        // finalize
+        if (finalText) {
+            // save assistant message
+            await saveMessage({ role: 'assistant', message: finalText });
+        }
+
+        // remove typing indicator if present
+        hideTypingIndicator();
+
+        // ensure UI reflects final content; remove loader if it never started
+        if (!streamStarted) {
+            if (loaderEl && loaderEl.parentNode) loaderEl.parentNode.removeChild(loaderEl);
+        }
+
+        contentEl.textContent = finalText || contentEl.textContent;
+        scrollToBottom();
     }
 
     // =====================================================

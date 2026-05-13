@@ -321,6 +321,14 @@
     }
 }
 
+/* Loader used inside streaming assistant bubble */
+.botbuddy-stream-loader {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    padding: 6px 0;
+}
+
 /* =====================================================
    INPUT AREA
    ===================================================== */
