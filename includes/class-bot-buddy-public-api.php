@@ -40,6 +40,16 @@ class Bot_buddy_Public_API {
                 'permission_callback' => [ $this, 'validate_request_nonce' ],
             ]
         );
+
+        register_rest_route(
+            'botbuddy/v1',
+            '/public/message_stream',
+            [
+                'methods' => 'POST',
+                'callback' => [ $this, 'handle_stream_message' ],
+                'permission_callback' => [ $this, 'validate_request_nonce' ],
+            ]
+        );
     }
 
     public function validate_request_nonce( WP_REST_Request $request ) {
@@ -118,6 +128,133 @@ class Bot_buddy_Public_API {
                 'received' => $get_response,
             ]
         );
+    }
+
+    public function handle_stream_message( WP_REST_Request $request ) {
+        $data = $request->get_json_params();
+
+        if ( ! isset( $data['message'] ) ) {
+            return new WP_Error(
+                'botbuddy_missing_message',
+                __( 'Missing message parameter.', 'botbuddy' ),
+                [
+                    'status' => 400,
+                ]
+            );
+        }
+
+        $message = sanitize_text_field( $data['message'] );
+        $similar_chunks = $this->get_similar_chunks( $message ) ?? [];
+        $payload = $this->message_payload( $data, $similar_chunks );
+
+        $llm_provider = $this->settings['llm_provider'] ?? 'hugging_face';
+        $endpoint = '';
+        $api_key = '';
+
+        if ( 'chatgpt' === $llm_provider ) {
+            $endpoint = 'https://api.openai.com/v1/chat/completions';
+            $api_key = $this->settings['chatgpt_api_key'] ?? '';
+            $payload['model'] = 'gpt-4.1-mini';
+        } else {
+            $endpoint = 'https://router.huggingface.co/v1/chat/completions';
+            $api_key = $this->settings['hugging_face_api_key'] ?? '';
+            $payload['model'] = 'deepseek-ai/DeepSeek-V4-Pro:novita';
+        }
+
+        if ( empty( $api_key ) ) {
+            return new WP_Error(
+                'botbuddy_missing_api_key',
+                __( 'Missing API key for selected LLM provider.', 'botbuddy' ),
+                [
+                    'status' => 400,
+                ]
+            );
+        }
+
+        $payload['stream'] = true;
+
+        // Stream chunks as Server-Sent Events for incremental UI updates.
+        if ( function_exists( 'status_header' ) ) {
+            status_header( 200 );
+        }
+        header( 'Content-Type: text/event-stream' );
+        header( 'Cache-Control: no-cache, no-transform' );
+        header( 'Connection: keep-alive' );
+        header( 'X-Accel-Buffering: no' );
+
+        while ( ob_get_level() > 0 ) {
+            @ob_end_flush();
+        }
+        @ob_implicit_flush( true );
+
+        echo "event: start\n";
+        echo 'data: ' . wp_json_encode( [ 'success' => true ] ) . "\n\n";
+        flush();
+
+        $stream_buffer = '';
+        $final_text = '';
+
+        $ch = curl_init( $endpoint );
+        curl_setopt( $ch, CURLOPT_POST, true );
+        curl_setopt( $ch, CURLOPT_HTTPHEADER, [
+            'Authorization: Bearer ' . $api_key,
+            'Content-Type: application/json',
+            'Accept: text/event-stream',
+        ] );
+        curl_setopt( $ch, CURLOPT_POSTFIELDS, wp_json_encode( $payload ) );
+        curl_setopt( $ch, CURLOPT_TIMEOUT, 0 );
+        curl_setopt( $ch, CURLOPT_RETURNTRANSFER, false );
+        curl_setopt( $ch, CURLOPT_WRITEFUNCTION, static function ( $curl, $chunk ) use ( &$stream_buffer, &$final_text ) {
+            $stream_buffer .= $chunk;
+
+            while ( false !== ( $newline_pos = strpos( $stream_buffer, "\n" ) ) ) {
+                $line = trim( substr( $stream_buffer, 0, $newline_pos ) );
+                $stream_buffer = substr( $stream_buffer, $newline_pos + 1 );
+
+                if ( '' === $line || 0 !== strpos( $line, 'data:' ) ) {
+                    continue;
+                }
+
+                $json_line = trim( substr( $line, 5 ) );
+                if ( '[DONE]' === $json_line ) {
+                    continue;
+                }
+
+                $decoded = json_decode( $json_line, true );
+                if ( ! is_array( $decoded ) ) {
+                    continue;
+                }
+
+                $delta = $decoded['choices'][0]['delta']['content'] ?? '';
+                if ( '' === $delta ) {
+                    continue;
+                }
+
+                $final_text .= $delta;
+
+                echo 'data: ' . wp_json_encode( [ 'token' => $delta ] ) . "\n\n";
+                flush();
+            }
+
+            return strlen( $chunk );
+        } );
+
+        $exec_result = curl_exec( $ch );
+
+        if ( false === $exec_result || curl_errno( $ch ) ) {
+            $error_message = curl_error( $ch );
+            echo "event: error\n";
+            echo 'data: ' . wp_json_encode( [ 'message' => $error_message ] ) . "\n\n";
+            flush();
+        }
+
+        curl_close( $ch );
+
+        echo "event: done\n";
+        echo 'data: ' . wp_json_encode( [ 'text' => $final_text ] ) . "\n\n";
+        flush();
+
+        exit;
     }
 
     private function get_similar_chunks( $message ) {
@@ -213,7 +350,7 @@ class Bot_buddy_Public_API {
         return $response['body']['choices'][0]['message']['content'] ?? '';
     }
 
-    function send_to_chatgpt($payload){
+    private function send_to_chatgpt($payload){
         $endpoint = 'https://api.openai.com/v1/chat/completions';
         $payload = array_merge($payload, [
             'model' => 'gpt-4.1-mini',
