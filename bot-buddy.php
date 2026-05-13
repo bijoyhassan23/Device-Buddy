@@ -332,6 +332,16 @@ class Bot_buddy{
     }
 
     public function get_vector(string $text = ""){
+        $llm_provider = $this->settings['llm_provider'] ?? 'hugging_face';
+        if($llm_provider === 'hugging_face'){
+            return $this->get_vector_hugging_face($text);
+        } elseif($llm_provider === 'chatgpt'){
+            return $this->get_vector_chatgpt($text);
+        }
+        return new WP_Error( 'botbuddy_invalid_llm', __( 'Invalid LLM provider configured.', 'botbuddy' ) );
+    }
+
+    private function get_vector_hugging_face(string $text = ""){
         // endpoint and payload
         $endpoint = 'https://router.huggingface.co/hf-inference/models/BAAI/bge-large-en-v1.5/pipeline/feature-extraction';
         $payload  = ['inputs' => $text];
@@ -355,6 +365,38 @@ class Bot_buddy{
             return $response;
         }
         return $response['body'];
+    }
+
+    private function get_vector_chatgpt(string $text = ""){
+        $endpoint = 'https://api.openai.com/v1/embeddings';
+        $payload = [
+            'input' => $text,
+            'model' => 'text-embedding-3-small',
+            "dimensions" => 1024
+        ];
+        
+        // args including Authorization header
+        $args = [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $this->settings['chatgpt_api_key'],
+                'Content-Type'  => 'application/json',
+            ],
+            'timeout' => 30,
+        ];
+
+        // call helper
+        $response = $this->send_request( $endpoint, $payload, 'POST', $args );
+
+        // handle errors or result
+        if ( is_wp_error( $response ) ) {
+            // transport error
+            $this->plugin->add_log( 'ChatGPT embedding request error: ' . $response->get_error_message() );
+            return $response;
+        }
+        if ( isset( $response['body']['data'][0]['embedding'] ) ) {
+            return $response['body']['data'][0]['embedding'];
+        }
+        return new WP_Error( 'botbuddy_embedding_error', __( 'Error occurred while retrieving embedding from ChatGPT.', 'botbuddy' ) );
     }
 }
 
