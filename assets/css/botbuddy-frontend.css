@@ -26,7 +26,6 @@
     position: static;
     width: 100%;
     max-width: 760px;
-    min-height: 640px;
     max-height: none;
     margin: 24px auto;
     display: flex;
@@ -98,6 +97,7 @@
     transition: background 0.2s ease;
     padding: 0;
     flex-shrink: 0;
+    display: none; /* Hidden by default, shown on mobile */
 }
 
 .botbuddy-header__close:hover {
@@ -159,6 +159,7 @@
     background: var(--botbuddy-bg-light);
     border-radius: 12px;
     color: var(--botbuddy-text-secondary);
+    margin: auto;
 }
 
 .botbuddy-empty-state__title {
@@ -449,20 +450,7 @@
         position: static;
         width: 100%;
         max-width: 100%;
-        min-height: 100vh;
         max-height: 100%;
-        margin: 0;
-        border-radius: 0;
-        animation: slideFromBottom 0.3s ease-out;
-    }
-
-    @keyframes slideFromBottom {
-        from {
-            transform: translateY(100%);
-        }
-        to {
-            transform: translateY(0);
-        }
     }
 
     .botbuddy-header {

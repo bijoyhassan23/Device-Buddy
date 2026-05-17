@@ -319,7 +319,7 @@
         const emptyState = document.querySelector('.botbuddy-empty-state');
 
         if (emptyState) {
-            emptyState.style.display = allMessages && allMessages.length > 0 ? 'none' : 'block';
+            emptyState.style.display = allMessages && allMessages.length > 0 ? 'none' : 'flex';
         }
     }
 
