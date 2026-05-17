@@ -83,7 +83,7 @@ class Bot_buddy{
 
     private function init_hooks() {
         // Initialize hooks here
-        add_action( 'wp_enqueue_scripts', [ $this, 'register_scripts' ], 10, 0 );
+        add_action( 'wp_enqueue_scripts', [ $this, 'register_scripts' ], 11, 0 );
         add_action( 'admin_menu', [ $this, 'add_admin_menu' ], 10, 0 );
         add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_assets' ], 999, 1 );
         add_action( 'wp_ajax_botbuddy_save_settings', [ $this, 'save_settings_ajax' ] );

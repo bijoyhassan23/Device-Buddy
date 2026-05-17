@@ -17,7 +17,7 @@ class Bot_buddy_Shortcode {
     public function __construct( $plugin ) {
         $this->plugin = $plugin;
         $this->settings = $plugin->get_settings();
-        add_action( 'wp_enqueue_scripts', [ $this, 'register_assets' ] );
+        add_action( 'wp_enqueue_scripts', [ $this, 'register_assets' ], 10, 0 );
         add_shortcode( 'botbuddy', [ $this, 'render_shortcode' ] );
     }
 
@@ -42,7 +42,9 @@ class Bot_buddy_Shortcode {
 
     public function render_shortcode( $atts = [] ) {
         wp_enqueue_style( 'botbuddy-frontend-style' );
+        wp_enqueue_style( 'botbuddy-style' );
         wp_enqueue_script( 'botbuddy-frontend-script' );
+        wp_enqueue_script( 'botbuddy-script' );
         ob_start();
         include BOT_BUDDY_PLUGIN_DIR . 'includes/shortcode-body.php';
         return ob_get_clean();
