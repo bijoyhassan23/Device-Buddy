@@ -2,7 +2,7 @@
 /**
  * Plugin Name: BotBuddy
  * Description: An AI-powered chatbot for mobile service websites that delivers instant, accurate answers using your own data. Improve customer support, automate responses, and provide 24/7 assistance—all directly from your WordPress site.
- * Version: 1.0.0
+ * Version: 1.0.2
  * Author: ForaziTech
  * Author URI: https://forazitech.com
  * License: GPL2

@@ -121,6 +121,7 @@
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'X-WP-Nonce': BotBuddyFrontend.wpRestNonce,
                 'X-BotBuddy-Nonce': BotBuddyFrontend.nonce,
             },
             body: JSON.stringify(message),
@@ -134,6 +135,7 @@
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'X-WP-Nonce': BotBuddyFrontend.wpRestNonce,
                 'X-BotBuddy-Nonce': BotBuddyFrontend.nonce,
             },
             body: JSON.stringify(memoryData),
@@ -493,6 +495,7 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'X-WP-Nonce': BotBuddyFrontend.wpRestNonce,
                     'X-BotBuddy-Nonce': BotBuddyFrontend.nonce,
                 },
                 body: JSON.stringify(apiPayload),

@@ -53,11 +53,20 @@ class Bot_buddy_Public_API {
     }
 
     public function validate_request_nonce( WP_REST_Request $request ) {
-        $nonce = $request->get_header( 'x-botbuddy-nonce' );
-        if ( empty( $nonce ) ) {
-            $nonce = $request->get_param( 'nonce' );
+        $botbuddy_nonce = $request->get_header( 'x-botbuddy-nonce' );
+        if ( empty( $botbuddy_nonce ) ) {
+            $botbuddy_nonce = $request->get_param( 'nonce' );
         }
-        if ( empty( $nonce ) || ! wp_verify_nonce( $nonce, 'botbuddy_public_api' ) ) {
+
+        $wp_rest_nonce = $request->get_header( 'x-wp-nonce' );
+        if ( empty( $wp_rest_nonce ) ) {
+            $wp_rest_nonce = $request->get_param( '_wpnonce' );
+        }
+
+        $has_valid_botbuddy_nonce = ! empty( $botbuddy_nonce ) && wp_verify_nonce( $botbuddy_nonce, 'botbuddy_public_api' );
+        $has_valid_wp_rest_nonce = ! empty( $wp_rest_nonce ) && wp_verify_nonce( $wp_rest_nonce, 'wp_rest' );
+
+        if ( ! $has_valid_botbuddy_nonce && ! $has_valid_wp_rest_nonce ) {
             return new WP_Error(
                 'botbuddy_invalid_nonce',
                 __( 'Invalid request nonce.', 'botbuddy' ),

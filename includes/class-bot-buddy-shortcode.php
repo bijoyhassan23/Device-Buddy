@@ -33,6 +33,7 @@ class Bot_buddy_Shortcode {
                     'message_stream' => rest_url( 'botbuddy/v1/public/message_stream' ),
                     'memory' => rest_url( 'botbuddy/v1/public/memory' ),
                 ],
+                'wpRestNonce' => wp_create_nonce( 'wp_rest' ),
                 'nonce' => wp_create_nonce( 'botbuddy_public_api' ),
                 'botImageUrl' => $this->settings['bot_avatar'] ?? '',
                 'botName' => $this->settings['bot_name'] ?? 'BotBuddy',
