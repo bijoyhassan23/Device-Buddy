@@ -30,9 +30,7 @@ defined( 'ABSPATH' ) or die( 'Direct access is not allowed' );
             <!-- Empty State -->
             <div class="botbuddy-empty-state">
                 <div class="botbuddy-empty-state__icon">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"></path>
-                    </svg>
+                    <img src="<?php echo $this->settings["bot_avatar"]; ?>" alt="Bot Avatar">
                 </div>
                 <h3 class="botbuddy-empty-state__title">Start a conversation</h3>
                 <p class="botbuddy-empty-state__text">Ask me anything and I'll help you find the answer</p>
@@ -58,12 +56,13 @@ defined( 'ABSPATH' ) or die( 'Direct access is not allowed' );
                 </button>
             </div>
             <button class="botbuddy-clear-btn" title="Clear chat history">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                Start New Conversation
+                <!-- <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="3 6 5 6 21 6"></polyline>
                     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                     <line x1="10" y1="11" x2="10" y2="17"></line>
                     <line x1="14" y1="11" x2="14" y2="17"></line>
-                </svg>
+                </svg> -->
             </button>
         </div>
     </div>

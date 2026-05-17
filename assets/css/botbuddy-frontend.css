@@ -162,6 +162,14 @@
     margin: auto;
 }
 
+.botbuddy-empty-state__icon img {
+    width: 48px;
+    height: 48px;
+    object-fit: cover;
+    display: block;
+    border-radius: 6px;
+}
+
 .botbuddy-empty-state__title {
     margin: 0;
     font-size: 16px;
@@ -433,6 +441,7 @@
     display: flex;
     align-items: center;
     gap: 4px;
+    display: none; /* Hidden by default, shown when there are messages */
 }
 
 .botbuddy-clear-btn:hover {
