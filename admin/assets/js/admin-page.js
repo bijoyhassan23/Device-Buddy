@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', function () {
             chunkingButton.textContent = 'Chunking in progress...';
 
             try{
-                const response = await fetch(`https://docs.google.com/document/d/${BotBuddyAdmin.settings.doc_id}/export?format=txt`);
+                const response = await fetch(`https://docs.google.com/document/d/${BotBuddyAdmin.settings.doc_id}/export?format=md`);
                 if (!response.ok) {
                     throw new Error(`Failed to fetch document: ${response.statusText}`);
                 }

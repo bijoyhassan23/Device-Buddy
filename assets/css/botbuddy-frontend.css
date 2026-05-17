@@ -26,7 +26,7 @@
     position: static;
     width: 100%;
     max-width: 760px;
-    max-height: none;
+    max-height: 100%;
     margin: 24px auto;
     display: flex;
     flex-direction: column;
